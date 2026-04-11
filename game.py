@@ -24,7 +24,10 @@ class GameState(Enum):
 
 
 MAX_PLAYERS = 6
-MIN_PLAYERS = 2
+MIN_PLAYERS = 1
+
+# Sentinel user_id for the bot player (used in solo games)
+BOT_USER_ID = -1
 
 
 class Game:
@@ -47,6 +50,7 @@ class Game:
         self.state = GameState.SETUP
         self.active_player_index = 0   # index into self.player_ids
         self.round_number = 0
+        self.bot_id: int | None = None  # set when a bot player is added for solo games
 
     # ------------------------------------------------------------------
     # Player management
@@ -91,15 +95,22 @@ class Game:
         if self.state != GameState.WAITING_PLAYERS:
             return "❌ Game cannot be started in its current state."
         if len(self.player_ids) < MIN_PLAYERS:
-            return f"❌ Need at least {MIN_PLAYERS} players to start."
+            return f"❌ Need at least {MIN_PLAYERS} player to start."
+
+        # Solo mode: add a bot opponent automatically
+        if len(self.player_ids) == 1:
+            self.bot_id = BOT_USER_ID
+            self.player_ids.append(self.bot_id)
+            self.player_names[self.bot_id] = "🤖 Bot"
 
         self._deal_cards()
         self.state = GameState.PLAYING
         self.active_player_index = 0
         self.round_number = 1
         active_name = self.player_names[self.active_player]
+        solo_note = "\n🤖 No other players? A Bot has joined as your opponent!" if self.bot_id else ""
         return (
-            f"🃏 Game started with the *{self.pack.name}* pack!\n"
+            f"🃏 Game started with the *{self.pack.name}* pack!{solo_note}\n"
             f"Cards dealt to {len(self.player_ids)} players.\n"
             f"▶️ Round {self.round_number}: {active_name} goes first!"
         )
@@ -119,6 +130,16 @@ class Game:
     # ------------------------------------------------------------------
     # Round helpers
     # ------------------------------------------------------------------
+
+    def bot_choose_stat(self) -> str | None:
+        """Return the stat the bot will play (highest value on its top card).
+        Returns None if the bot has no card or it is not the bot's turn."""
+        if self.bot_id is None or self.active_player != self.bot_id:
+            return None
+        card = self.current_card(self.bot_id)
+        if not card:
+            return None
+        return max(card.categories, key=lambda s: card.categories[s])
 
     @property
     def active_player(self) -> int:

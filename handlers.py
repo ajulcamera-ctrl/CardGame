@@ -31,11 +31,12 @@ HELP_TEXT = (
     "/quit – Leave the current game\n\n"
     "How to play:\n"
     "1️⃣  One player creates a game with /newgame\n"
-    "2️⃣  Other players join with /join\n"
+    "2️⃣  Other players join with /join (optional – play solo against 🤖 Bot!)\n"
     "3️⃣  Creator starts with /gamestart\n"
     "4️⃣  Active player picks a category – highest value wins the round!\n"
     "5️⃣  Winner takes all cards played that round.\n"
-    "6️⃣  Last player standing wins 🏆"
+    "6️⃣  Last player standing wins 🏆\n\n"
+    "💡 *Solo mode:* Use /newgame then /gamestart without anyone else joining – a Bot will be your opponent!"
 )
 
 
@@ -183,6 +184,23 @@ async def _send_active_card_to_chat(context: ContextTypes.DEFAULT_TYPE, chat_id:
     active_id = game.active_player
     card = game.current_card(active_id)
     if not card:
+        return
+
+    # If it's the bot's turn, resolve it automatically without showing a card prompt
+    bot_stat = game.bot_choose_stat()
+    if bot_stat is not None:
+        result = game.play_round(bot_stat)
+        if not result:
+            return
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text=result["message"],
+            parse_mode="Markdown",
+        )
+        if result["game_over"]:
+            game_manager.remove_game(chat_id)
+        else:
+            await _send_active_card_to_chat(context, chat_id, game)
         return
 
     active_name = game.player_names[active_id]
