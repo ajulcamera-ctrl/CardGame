@@ -23,7 +23,8 @@ HELP_TEXT = (
     "🃏 *Card Game Bot*\n\n"
     "Commands:\n"
     "/newgame <pack> – Start a new game\n"
-    "  Packs: `animals`, `movies`, `countries`, `technology`\n"
+    "  Packs: `animals`, `movies`, `countries`, `technology`,\n"
+    "         `supercars`, `f1`, `space`, `mountains`\n"
     "/join – Join the current game\n"
     "/gamestart – Start the game (creator only)\n"
     "/status – Show current game status\n"
@@ -49,14 +50,14 @@ async def cmd_new_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     args = context.args
     if not args:
         await update.message.reply_text(
-            "Usage: /newgame <pack>\nPacks: animals, movies, countries, technology"
+            "Usage: /newgame <pack>\nPacks: animals, movies, countries, technology, supercars, f1, space, mountains"
         )
         return
 
     pack_key = args[0].lower()
-    if pack_key not in ("animals", "movies", "countries", "technology"):
+    if pack_key not in ("animals", "movies", "countries", "technology", "supercars", "f1", "space", "mountains"):
         await update.message.reply_text(
-            "❌ Unknown pack. Choose from: animals, movies, countries, technology"
+            "❌ Unknown pack. Choose from: animals, movies, countries, technology, supercars, f1, space, mountains"
         )
         return
 
