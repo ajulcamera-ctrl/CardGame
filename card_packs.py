@@ -253,10 +253,212 @@ for _c, _rev, _emp, _fnd, _mkt, _pat in _tech_data:
     technology_pack.add_card(_c, [_rev, _emp, _fnd, _mkt, _pat])
 
 
+# ---------------------------------------------------------------------------
+# 🏎️ Super Cars Pack  (stats: Top Speed km/h, 0-100 sec, Power hp, Price $M, Year)
+# ---------------------------------------------------------------------------
+supercars_pack = CardPack(
+    name="Super Cars",
+    stat_names=["Top Speed", "0-100", "Power", "Price", "Year"],
+    stat_units={"Top Speed": "km/h", "0-100": "s", "Power": "hp", "Price": "$M"},
+)
+
+_supercars_data = [
+    # (name,                               top_speed, 0-100, power,  price,  year)
+    ("Bugatti Chiron Super Sport 300+",         490,   2.4,  1578,   3.90, 2021),
+    ("Koenigsegg Jesko Absolut",                531,   2.5,  1600,   3.00, 2022),
+    ("Hennessey Venom F5",                      484,   2.6,  1817,   2.10, 2021),
+    ("SSC Tuatara",                             455,   2.5,  1750,   1.90, 2020),
+    ("Bugatti Veyron Super Sport",              431,   2.4,  1200,   2.60, 2010),
+    ("Koenigsegg Agera RS",                     447,   2.8,  1160,   2.50, 2017),
+    ("Rimac Nevera",                            412,   1.97, 1914,   2.40, 2022),
+    ("Aston Martin Valkyrie",                   402,   2.5,  1155,   3.50, 2022),
+    ("McLaren F1",                              386,   3.2,   627,   1.10, 1993),
+    ("GMA T.50",                                370,   2.9,   663,   3.10, 2022),
+    ("Pagani Huayra R",                         370,   2.8,   850,   3.10, 2022),
+    ("Ferrari LaFerrari",                       350,   2.9,   950,   1.40, 2013),
+    ("McLaren P1",                              350,   2.8,   916,   1.15, 2013),
+    ("Lamborghini Aventador SVJ",               350,   2.8,   770,   0.52, 2018),
+    ("Lamborghini Sian",                        350,   2.8,   819,   3.60, 2020),
+    ("McLaren Senna",                           340,   2.8,   800,   1.00, 2018),
+    ("Ferrari SF90 Stradale",                   340,   2.5,   986,   0.51, 2019),
+    ("Ferrari 296 GTB",                         330,   2.9,   830,   0.32, 2022),
+    ("Porsche 918 Spyder",                      345,   2.6,   887,   0.85, 2013),
+    ("Bugatti Divo",                            380,   2.4,  1479,   6.00, 2019),
+    ("Ford GT (2017)",                          348,   3.3,   647,   0.45, 2017),
+    ("Ferrari Enzo",                            350,   3.65,  651,   0.66, 2002),
+    ("Porsche Carrera GT",                      330,   3.9,   612,   0.44, 2004),
+    ("Nissan GT-R NISMO",                       315,   2.5,   600,   0.21, 2022),
+    ("Lamborghini Huracán STO",                 310,   3.0,   640,   0.33, 2021),
+    ("Chevrolet Corvette C8 Z06",               311,   2.6,   670,   0.11, 2023),
+    ("Dodge Viper ACR",                         299,   3.3,   645,   0.12, 2017),
+    ("Ferrari 488 GTB",                         330,   3.0,   660,   0.28, 2015),
+    ("Lamborghini Urus Performante",            306,   3.3,   666,   0.24, 2022),
+    ("McLaren 765LT",                           330,   2.8,   765,   0.36, 2020),
+    ("Porsche 911 GT2 RS",                      340,   2.7,   700,   0.30, 2018),
+    ("Maserati MC20",                           325,   2.9,   630,   0.22, 2021),
+    ("Zenvo TSR-S",                             325,   2.8,  1177,   1.19, 2018),
+    ("Lotus Evija",                             320,   3.0,  2000,   2.30, 2022),
+    ("Pininfarina Battista",                    350,   1.86, 1900,   2.50, 2023),
+]
+
+for _n, _spd, _acc, _pwr, _prc, _yr in _supercars_data:
+    supercars_pack.add_card(_n, [_spd, _acc, _pwr, _prc, _yr])
+
+
+# ---------------------------------------------------------------------------
+# 🏁 F1 Cars Pack  (stats: Top Speed km/h, Power hp, Season Wins, Weight kg, Year)
+# ---------------------------------------------------------------------------
+f1_pack = CardPack(
+    name="F1 Cars",
+    stat_names=["Top Speed", "Power", "Season Wins", "Weight", "Year"],
+    stat_units={"Top Speed": "km/h", "Power": "hp", "Weight": "kg"},
+)
+
+_f1_data = [
+    # (name,                          top_speed, power, wins, weight, year)
+    ("Red Bull RB19",                      360,  1000,   21,    798, 2023),
+    ("Mercedes W11",                       374,  1000,   13,    746, 2020),
+    ("Ferrari F2004",                      369,   900,   15,    600, 2004),
+    ("McLaren MP4/4",                      320,   685,   15,    540, 1988),
+    ("Mercedes W07",                       360,   900,   19,    702, 2016),
+    ("Red Bull RB9",                       330,   800,   13,    642, 2013),
+    ("Red Bull RB6",                       335,   780,   15,    620, 2010),
+    ("Mercedes W05",                       355,   900,   16,    691, 2014),
+    ("Mercedes W06",                       358,   950,   16,    701, 2015),
+    ("Red Bull RB7",                       320,   790,   12,    640, 2011),
+    ("Williams FW14B",                     320,   780,   10,    505, 1992),
+    ("McLaren MP4/6",                      310,   700,    8,    505, 1991),
+    ("McLaren MP4/13",                     330,   780,    9,    600, 1998),
+    ("Ferrari F1-2000",                    350,   840,   10,    600, 2000),
+    ("Renault R25",                        340,   870,    8,    605, 2005),
+    ("Ferrari 248 F1",                     355,   870,    9,    605, 2006),
+    ("Brawn BGP001",                       320,   750,    8,    605, 2009),
+    ("Williams FW15C",                     325,   750,   10,    505, 1993),
+    ("McLaren MP4/2",                      295,   750,   12,    540, 1984),
+    ("Ferrari 312T2",                      295,   500,    9,    575, 1976),
+    ("McLaren M23",                        290,   480,   16,    590, 1974),
+    ("Lotus 72D",                          280,   450,    8,    530, 1970),
+    ("Red Bull RB8",                       320,   790,   12,    642, 2012),
+    ("Mercedes W08",                       360,   950,   12,    728, 2017),
+    ("Red Bull RB16B",                     365,   1000,  11,    798, 2021),
+    ("Ferrari F14 T",                      340,   870,    2,    691, 2014),
+    ("McLaren MP4/23",                     330,   780,    8,    605, 2008),
+    ("Williams FW18",                      330,   720,    8,    505, 1996),
+    ("Lotus 49B",                          290,   415,    5,    508, 1968),
+    ("Tyrrell P34",                        285,   465,    3,    595, 1976),
+]
+
+for _n, _spd, _pwr, _wins, _wgt, _yr in _f1_data:
+    f1_pack.add_card(_n, [_spd, _pwr, _wins, _wgt, _yr])
+
+
+# ---------------------------------------------------------------------------
+# 🚀 Space Pack  (stats: Diameter km, Moons, Gravity m/s², Avg Temp °C, Discovery Year)
+# ---------------------------------------------------------------------------
+space_pack = CardPack(
+    name="Space",
+    stat_names=["Diameter", "Moons", "Gravity", "Avg Temp", "Discovery Year"],
+    stat_units={"Diameter": "km", "Gravity": "m/s²", "Avg Temp": "°C"},
+)
+
+_space_data = [
+    # (name,              diameter_km, moons, gravity, avg_temp, discovery_year)
+    # discovery_year: negative = known in antiquity
+    ("Sun",               1391000,       8,  274.0,    5500,  -3000),
+    ("Jupiter",            139820,      95,   24.8,    -110,  -3000),
+    ("Saturn",             116460,     146,   10.4,    -140,  -3000),
+    ("Uranus",              50724,      28,    8.7,    -195,   1781),
+    ("Neptune",             49244,      16,   11.2,    -200,   1846),
+    ("Earth",               12742,       1,    9.8,      15,  -3000),
+    ("Venus",               12104,       0,    8.9,     464,  -3000),
+    ("Mars",                 6779,       2,    3.7,     -65,  -3000),
+    ("Ganymede",             5268,       0,    1.4,    -163,   1610),
+    ("Titan",                5150,       0,    1.4,    -179,   1655),
+    ("Mercury",              4879,       0,    3.7,     167,  -3000),
+    ("Callisto",             4821,       0,    1.2,    -139,   1610),
+    ("Io",                   3636,       0,    1.8,    -130,   1610),
+    ("Moon",                 3474,       0,    1.6,     -20,  -3000),
+    ("Europa",               3122,       0,    1.3,    -160,   1610),
+    ("Triton",               2707,       0,    0.78,   -235,   1846),
+    ("Pluto",                2376,       5,    0.62,   -225,   1930),
+    ("Eris",                 2326,       1,    0.82,   -238,   2005),
+    ("Titania",              1578,       0,    0.38,   -203,   1787),
+    ("Haumea",               1560,       2,    0.44,   -241,   2004),
+    ("Oberon",               1523,       0,    0.35,   -198,   1787),
+    ("Rhea",                 1527,       0,    0.26,   -220,   1672),
+    ("Iapetus",              1469,       0,    0.22,   -143,   1671),
+    ("Makemake",             1430,       1,    0.40,   -239,   2005),
+    ("Charon",               1212,       0,    0.29,   -220,   1978),
+    ("Umbriel",              1169,       0,    0.25,   -208,   1851),
+    ("Ariel",                1158,       0,    0.27,   -210,   1851),
+    ("Dione",                1123,       0,    0.23,   -186,   1684),
+    ("Tethys",               1062,       0,    0.15,   -187,   1684),
+    ("Ceres",                 945,       0,    0.28,   -105,   1801),
+    ("Enceladus",             504,       0,    0.11,   -198,   1789),
+    ("Miranda",               472,       0,    0.08,   -187,   1948),
+]
+
+for _n, _dia, _moons, _grav, _temp, _yr in _space_data:
+    space_pack.add_card(_n, [_dia, _moons, _grav, _temp, _yr])
+
+
+# ---------------------------------------------------------------------------
+# ⛰️ Mountains Pack  (stats: Height m, Prominence m, First Ascent yr, Difficulty 1-10, Latitude °)
+# ---------------------------------------------------------------------------
+mountains_pack = CardPack(
+    name="Mountains",
+    stat_names=["Height", "Prominence", "First Ascent", "Difficulty", "Latitude"],
+    stat_units={"Height": "m", "Prominence": "m", "Latitude": "°"},
+)
+
+_mountains_data = [
+    # (name,                  height_m, prominence_m, first_ascent, difficulty, latitude)
+    ("Mount Everest",            8849,       8849,       1953,         9,     28),
+    ("K2",                       8611,       4017,       1954,        10,     36),
+    ("Kangchenjunga",            8586,       3922,       1955,         9,     27),
+    ("Lhotse",                   8516,        610,       1956,         8,     28),
+    ("Makalu",                   8485,       2386,       1955,         9,     28),
+    ("Cho Oyu",                  8188,       2340,       1954,         7,     28),
+    ("Dhaulagiri I",             8167,       3357,       1960,         9,     29),
+    ("Manaslu",                  8163,       3092,       1956,         9,     29),
+    ("Nanga Parbat",             8126,       4608,       1953,        10,     35),
+    ("Annapurna I",              8091,       2984,       1950,        10,     29),
+    ("Gasherbrum I",             8080,       2155,       1958,         8,     36),
+    ("Broad Peak",               8051,       1701,       1957,         7,     36),
+    ("Gasherbrum II",            8035,       1523,       1956,         7,     36),
+    ("Shishapangma",             8027,       2897,       1964,         7,     29),
+    ("Aconcagua",                6961,       6961,       1897,         7,    -33),
+    ("Denali",                   6190,       6140,       1913,         8,     63),
+    ("Chimborazo",               6263,       6310,       1880,         6,     -2),
+    ("Mount Logan",              5959,       5250,       1925,         7,     61),
+    ("Kilimanjaro",              5895,       5885,       1889,         5,     -3),
+    ("Pico de Orizaba",          5636,       4922,       1848,         6,     19),
+    ("Elbrus",                   5642,       5642,       1874,         5,     43),
+    ("Popocatépetl",             5426,       3020,       1519,         7,     19),
+    ("Mount Kenya",              5199,       3825,       1899,         7,      0),
+    ("Margherita Peak",          5109,       3952,       1906,         7,      0),
+    ("Vinson Massif",            4892,       4892,       1966,         7,    -78),
+    ("Puncak Jaya",              4884,       4884,       1962,         7,     -4),
+    ("Mont Blanc",               4808,       4696,       1786,         6,     46),
+    ("Mount Rainier",            4392,       4026,       1870,         6,     47),
+    ("Mount Whitney",            4421,       3072,       1873,         4,     37),
+    ("Matterhorn",               4478,       1042,       1865,         8,     46),
+    ("Mount Fuji",               3776,       3776,        663,         3,     35),
+    ("Olympus (Greece)",         2918,       2355,       1913,         4,     40),
+]
+
+for _n, _h, _p, _fa, _diff, _lat in _mountains_data:
+    mountains_pack.add_card(_n, [_h, _p, _fa, _diff, _lat])
+
+
 # Convenient lookup by key
 PACKS = {
     "animals":    animals_pack,
     "movies":     movies_pack,
     "countries":  countries_pack,
     "technology": technology_pack,
+    "supercars":  supercars_pack,
+    "f1":         f1_pack,
+    "space":      space_pack,
+    "mountains":  mountains_pack,
 }
