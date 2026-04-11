@@ -139,7 +139,7 @@ class Game:
         card = self.current_card(self.bot_id)
         if not card:
             return None
-        return max(card.categories, key=lambda s: card.categories[s])
+        return max(card.categories, key=lambda s: card.categories.get(s, 0))
 
     @property
     def active_player(self) -> int:
