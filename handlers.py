@@ -17,7 +17,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
-from game import GameState
+from game import GameState, MAX_PLAYERS
 from game_manager import GameManager
 
 game_manager = GameManager()
@@ -93,13 +93,15 @@ async def cmd_new_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         )
 
     game = game_manager.create_game(chat_id, pack_key, user.id)
-    # Creator automatically joins
+    # Creator automatically joins; the return message is incorporated inline below
     game.add_player(user.id, user.first_name)
 
     esc_name = escape_markdown(user.first_name, version=2)
     esc_pack = escape_markdown(game.pack.name, version=2)
+    player_count = len(game.player_ids)
     await update.message.reply_text(
-        f"🎮 New *{esc_pack}* game created by {esc_name}\\!\n\n"
+        f"🎮 New *{esc_pack}* game created by {esc_name}\\!\n"
+        f"Players: {player_count}/{MAX_PLAYERS}\n\n"
         f"Others can join with /join\\. Start the game with /gamestart\\.",
         parse_mode="MarkdownV2",
     )
