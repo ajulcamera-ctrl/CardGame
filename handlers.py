@@ -11,13 +11,31 @@ Commands
 /quit                – leave the current game
 """
 
+import time
+
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
+from telegram.helpers import escape_markdown
 
-from game import GameState
+from game import GameState, MAX_PLAYERS
 from game_manager import GameManager
 
 game_manager = GameManager()
+
+# ---------------------------------------------------------------------------
+# Per-user rate limiting (prevents command/callback spam)
+# ---------------------------------------------------------------------------
+_RATE_LIMIT_SECONDS = 1.0
+_user_last_cmd: dict[int, float] = {}
+
+
+def _is_rate_limited(user_id: int) -> bool:
+    """Return True if the user has sent a command too recently."""
+    now = time.monotonic()
+    if now - _user_last_cmd.get(user_id, 0.0) < _RATE_LIMIT_SECONDS:
+        return True
+    _user_last_cmd[user_id] = now
+    return False
 
 HELP_TEXT = (
     "🃏 *Card Game Bot*\n\n"
@@ -41,12 +59,17 @@ HELP_TEXT = (
 
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if _is_rate_limited(update.effective_user.id):
+        return
     await update.message.reply_text(HELP_TEXT, parse_mode="Markdown")
 
 
 async def cmd_new_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     user = update.effective_user
+
+    if _is_rate_limited(user.id):
+        return
 
     args = context.args
     if not args:
@@ -70,18 +93,26 @@ async def cmd_new_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         )
 
     game = game_manager.create_game(chat_id, pack_key, user.id)
-    # Creator automatically joins
-    msg = game.add_player(user.id, user.first_name)
+    # Creator automatically joins; the return message is incorporated inline below
+    game.add_player(user.id, user.first_name)
+
+    esc_name = escape_markdown(user.first_name, version=2)
+    esc_pack = escape_markdown(game.pack.name, version=2)
+    player_count = len(game.player_ids)
     await update.message.reply_text(
-        f"🎮 New *{game.pack.name}* game created by {user.first_name}!\n{msg}\n\n"
-        f"Others can join with /join. Start the game with /gamestart.",
-        parse_mode="Markdown",
+        f"🎮 New *{esc_pack}* game created by {esc_name}\\!\n"
+        f"Players: {player_count}/{MAX_PLAYERS}\n\n"
+        f"Others can join with /join\\. Start the game with /gamestart\\.",
+        parse_mode="MarkdownV2",
     )
 
 
 async def cmd_join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     user = update.effective_user
+
+    if _is_rate_limited(user.id):
+        return
 
     game = game_manager.get_game(chat_id)
     if not game:
@@ -96,13 +127,16 @@ async def cmd_game_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     chat_id = update.effective_chat.id
     user = update.effective_user
 
+    if _is_rate_limited(user.id):
+        return
+
     game = game_manager.get_game(chat_id)
     if not game:
         await update.message.reply_text("❌ No game in progress. Use /newgame <pack> to start one.")
         return
 
     msg = game.start_game(user.id)
-    await update.message.reply_text(msg, parse_mode="Markdown")
+    await update.message.reply_text(msg, parse_mode="MarkdownV2")
 
     if game.state == GameState.PLAYING:
         await _send_active_card(update, context, game)
@@ -110,16 +144,23 @@ async def cmd_game_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
+
+    if _is_rate_limited(update.effective_user.id):
+        return
+
     game = game_manager.get_game(chat_id)
     if not game:
         await update.message.reply_text("❌ No game in progress.")
         return
-    await update.message.reply_text(game.status_message(), parse_mode="Markdown")
+    await update.message.reply_text(game.status_message(), parse_mode="MarkdownV2")
 
 
 async def cmd_quit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     user = update.effective_user
+
+    if _is_rate_limited(user.id):
+        return
 
     game = game_manager.get_game(chat_id)
     if not game:
@@ -144,27 +185,45 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     chat_id = query.message.chat.id
     user = query.from_user
 
+    if _is_rate_limited(user.id):
+        return
+
     game = game_manager.get_game(chat_id)
-    if not game or game.state != GameState.PLAYING:
+    if not game:
         await query.edit_message_text("⚠️ No active game or it's not your turn.")
         return
 
-    # Only the active player may choose
-    if user.id != game.active_player:
-        active_name = game.player_names[game.active_player]
-        await query.answer(f"⛔ Wait – it's {active_name}'s turn!", show_alert=True)
-        return
+    async with game.lock:
+        # Re-check state inside the lock to prevent race conditions
+        if game.state != GameState.PLAYING:
+            await query.edit_message_text("⚠️ No active game or it's not your turn.")
+            return
 
-    chosen_stat = query.data  # callback_data is the stat name
+        # Only the active player may choose
+        if user.id != game.active_player:
+            active_name = game.player_names[game.active_player]
+            await query.answer(f"⛔ Wait – it's {active_name}'s turn!", show_alert=True)
+            return
 
-    result = game.play_round(chosen_stat)
+        chosen_stat = query.data
+
+        # Validate that chosen_stat is one of the valid stat names for this pack
+        if chosen_stat not in game.pack.stat_names:
+            await query.answer("⛔ Invalid stat choice.", show_alert=True)
+            return
+
+        result = game.play_round(chosen_stat)
+        game_over = result.get("game_over", False)
+        message = result.get("message", "")
+    # Lock released – perform I/O outside the critical section
+
     if not result:
         await query.edit_message_text("⚠️ Could not evaluate round.")
         return
 
-    await query.edit_message_text(result["message"], parse_mode="Markdown")
+    await query.edit_message_text(message, parse_mode="MarkdownV2")
 
-    if result["game_over"]:
+    if game_over:
         game_manager.remove_game(chat_id)
     else:
         # Show the next card for the new active player
@@ -189,13 +248,14 @@ async def _send_active_card_to_chat(context: ContextTypes.DEFAULT_TYPE, chat_id:
     # If it's the bot's turn, resolve it automatically without showing a card prompt
     bot_stat = game.bot_choose_stat()
     if bot_stat is not None:
-        result = game.play_round(bot_stat)
+        async with game.lock:
+            result = game.play_round(bot_stat)
         if not result:
             return
         await context.bot.send_message(
             chat_id=chat_id,
             text=result["message"],
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",
         )
         if result["game_over"]:
             game_manager.remove_game(chat_id)
@@ -206,16 +266,20 @@ async def _send_active_card_to_chat(context: ContextTypes.DEFAULT_TYPE, chat_id:
     active_name = game.player_names[active_id]
     unit_map = game.pack.stat_units
 
-    # Build card display
+    # Build card display (MarkdownV2 formatted)
+    esc_title = escape_markdown(card.title, version=2)
+    esc_name = escape_markdown(active_name, version=2)
     lines = [
-        f"🃏 *{card.title}*",
-        f"👤 {active_name}'s turn – pick a category!",
+        f"🃏 *{esc_title}*",
+        f"👤 {esc_name}'s turn – pick a category\\!",
         "",
     ]
     for stat, val in card.categories.items():
         unit = unit_map.get(stat, "")
         direction = " ↓" if stat in game.pack.lower_is_better else " ↑"
-        lines.append(f"  • {stat}: {val} {unit}{direction}".rstrip())
+        esc_stat = escape_markdown(stat, version=2)
+        esc_unit = escape_markdown(unit, version=2)
+        lines.append(f"  • {esc_stat}: {val} {esc_unit}{direction}".rstrip())
 
     # One button per stat (↑ highest wins, ↓ lowest wins)
     buttons = [
@@ -230,6 +294,6 @@ async def _send_active_card_to_chat(context: ContextTypes.DEFAULT_TYPE, chat_id:
     await context.bot.send_message(
         chat_id=chat_id,
         text="\n".join(lines),
-        parse_mode="Markdown",
+        parse_mode="MarkdownV2",
         reply_markup=keyboard,
     )
