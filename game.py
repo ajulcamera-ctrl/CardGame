@@ -132,14 +132,18 @@ class Game:
     # ------------------------------------------------------------------
 
     def bot_choose_stat(self) -> str | None:
-        """Return the stat the bot will play (highest value on its top card).
+        """Return the stat the bot will play (best value on its top card).
         Returns None if the bot has no card or it is not the bot's turn."""
         if self.bot_id is None or self.active_player != self.bot_id:
             return None
         card = self.current_card(self.bot_id)
         if not card:
             return None
-        return max(card.categories, key=lambda s: card.categories.get(s, 0))
+        return max(
+            card.categories,
+            key=lambda s: -card.categories.get(s, 0) if s in self.pack.lower_is_better
+                          else card.categories.get(s, 0),
+        )
 
     @property
     def active_player(self) -> int:
@@ -176,9 +180,13 @@ class Game:
                 values[pid] = card.categories.get(stat, 0)
                 top_cards[pid] = card
 
-        # Determine winner(s) – higher is better for all stats
-        max_val = max(values.values()) if values else 0
-        winners = [pid for pid, val in values.items() if val == max_val]
+        # Determine winner(s) – direction depends on per-stat pack setting
+        lower_wins = chosen_stat in self.pack.lower_is_better
+        if lower_wins:
+            best_val = min(values.values()) if values else 0
+        else:
+            best_val = max(values.values()) if values else 0
+        winners = [pid for pid, val in values.items() if val == best_val]
 
         if len(winners) == 1:
             round_winner = winners[0]
@@ -187,7 +195,8 @@ class Game:
 
         # Build the comparison table
         unit = self.pack.stat_units.get(stat, "")
-        lines = [f"📊 *{stat}* results (Round {self.round_number}):"]
+        direction_hint = " *(lowest wins)*" if lower_wins else " *(highest wins)*"
+        lines = [f"📊 *{stat}*{direction_hint} results (Round {self.round_number}):"]
         for pid in self.player_ids:
             if pid in values:
                 mark = "👑" if pid == round_winner else ("🤝" if round_winner is None and pid in winners else "  ")

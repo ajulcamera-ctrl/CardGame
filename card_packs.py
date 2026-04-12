@@ -10,10 +10,11 @@ class Card:
 
 
 class CardPack:
-    def __init__(self, name, stat_names, stat_units=None):
+    def __init__(self, name, stat_names, stat_units=None, lower_is_better=None):
         self.name = name
         self.stat_names = stat_names        # ordered list of 5 stat names
         self.stat_units = stat_units or {}  # optional display units per stat
+        self.lower_is_better = set(lower_is_better or [])  # stats where lowest value wins
         self.cards = []
 
     def add_card(self, title, values):
@@ -203,6 +204,7 @@ technology_pack = CardPack(
     name="Technology",
     stat_names=["Revenue", "Employees", "Founded", "Market Cap", "Patents"],
     stat_units={"Revenue": "$B", "Employees": "K", "Market Cap": "$B", "Patents": "K"},
+    lower_is_better=["Founded"],
 )
 
 _tech_data = [
@@ -260,6 +262,7 @@ supercars_pack = CardPack(
     name="Super Cars",
     stat_names=["Top Speed", "0-100", "Power", "Price", "Year"],
     stat_units={"Top Speed": "km/h", "0-100": "s", "Power": "hp", "Price": "$M"},
+    lower_is_better=["0-100"],
 )
 
 _supercars_data = [
@@ -312,6 +315,7 @@ f1_pack = CardPack(
     name="F1 Cars",
     stat_names=["Top Speed", "Power", "Season Wins", "Weight", "Year"],
     stat_units={"Top Speed": "km/h", "Power": "hp", "Weight": "kg"},
+    lower_is_better=["Weight"],
 )
 
 _f1_data = [
@@ -359,6 +363,7 @@ space_pack = CardPack(
     name="Space",
     stat_names=["Diameter", "Moons", "Gravity", "Avg Temp", "Discovery Year"],
     stat_units={"Diameter": "km", "Gravity": "m/s²", "Avg Temp": "°C"},
+    lower_is_better=["Discovery Year"],
 )
 
 _space_data = [
@@ -409,6 +414,7 @@ mountains_pack = CardPack(
     name="Mountains",
     stat_names=["Height", "Prominence", "First Ascent", "Difficulty", "Latitude"],
     stat_units={"Height": "m", "Prominence": "m", "Latitude": "°"},
+    lower_is_better=["First Ascent"],
 )
 
 _mountains_data = [
