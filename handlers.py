@@ -33,7 +33,7 @@ HELP_TEXT = (
     "1️⃣  One player creates a game with /newgame\n"
     "2️⃣  Other players join with /join (optional – play solo against 🤖 Bot!)\n"
     "3️⃣  Creator starts with /gamestart\n"
-    "4️⃣  Active player picks a category – highest value wins the round!\n"
+    "4️⃣  Active player picks a category – ↑ highest or ↓ lowest value wins (depends on category)!\n"
     "5️⃣  Winner takes all cards played that round.\n"
     "6️⃣  Last player standing wins 🏆\n\n"
     "💡 *Solo mode:* Use /newgame then /gamestart without anyone else joining – a Bot will be your opponent!"
@@ -214,11 +214,15 @@ async def _send_active_card_to_chat(context: ContextTypes.DEFAULT_TYPE, chat_id:
     ]
     for stat, val in card.categories.items():
         unit = unit_map.get(stat, "")
-        lines.append(f"  • {stat}: {val} {unit}".rstrip())
+        direction = " ↓" if stat in game.pack.lower_is_better else " ↑"
+        lines.append(f"  • {stat}: {val} {unit}{direction}".rstrip())
 
-    # One button per stat
+    # One button per stat (↑ highest wins, ↓ lowest wins)
     buttons = [
-        [InlineKeyboardButton(stat, callback_data=stat)]
+        [InlineKeyboardButton(
+            f"{stat} {'↓' if stat in game.pack.lower_is_better else '↑'}",
+            callback_data=stat,
+        )]
         for stat in game.pack.stat_names
     ]
     keyboard = InlineKeyboardMarkup(buttons)
