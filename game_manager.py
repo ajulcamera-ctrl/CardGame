@@ -2,12 +2,14 @@
 game_manager.py – Manages multiple simultaneous Game instances, one per chat.
 """
 
+import os
 from datetime import datetime, timedelta, timezone
 
 from game import Game
 
-# Games idle for longer than this will be automatically removed
-_GAME_TTL_HOURS = 24
+# Games idle for longer than this will be automatically removed.
+# Override by setting GAME_TTL_HOURS in the environment / .env file.
+_GAME_TTL_HOURS = int(os.getenv("GAME_TTL_HOURS", "24"))
 # Cleanup runs at most once per hour to avoid overhead on every request
 _CLEANUP_INTERVAL_SECONDS = 3600
 
