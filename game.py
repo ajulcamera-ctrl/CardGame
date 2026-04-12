@@ -10,23 +10,9 @@ ROUND_EVAL     – evaluating the round (brief transitional state)
 GAME_OVER      – one player has all cards; winner announced
 """
 
-import asyncio
 import random
-import re
-from datetime import datetime, timezone
 from enum import Enum, auto
 from card_packs import PACKS
-
-# ---------------------------------------------------------------------------
-# MarkdownV2 escaping helper (avoids a telegram import in game logic)
-# Escapes the same set of chars as telegram.helpers.escape_markdown(v=2)
-# ---------------------------------------------------------------------------
-_MD2_SPECIAL = re.compile(r'([\\_\*\[\]\(\)~`>#\+\-=|{}\.\!])')
-
-
-def _esc(text: str) -> str:
-    """Escape a string for Telegram MarkdownV2 parse mode."""
-    return _MD2_SPECIAL.sub(r'\\\1', str(text))
 
 
 class GameState(Enum):
@@ -40,10 +26,8 @@ class GameState(Enum):
 MAX_PLAYERS = 6
 MIN_PLAYERS = 1
 
-# Sentinel user_id for the bot player (used in solo games).
-# 0 is used because Telegram user IDs are always positive integers,
-# so 0 cannot collide with any real user or group ID.
-BOT_USER_ID = 0
+# Sentinel user_id for the bot player (used in solo games)
+BOT_USER_ID = -1
 
 
 class Game:
@@ -68,17 +52,12 @@ class Game:
         self.round_number = 0
         self.bot_id: int | None = None  # set when a bot player is added for solo games
 
-        # Concurrency: per-game lock to serialise state-modifying operations
-        self.lock = asyncio.Lock()
-        # Activity tracking for TTL-based cleanup
-        self.last_activity: datetime = datetime.now(timezone.utc)
-
     # ------------------------------------------------------------------
     # Player management
     # ------------------------------------------------------------------
 
     def add_player(self, user_id: int, name: str) -> str:
-        """Add a player to the game.  Returns a status message (plain text)."""
+        """Add a player to the game.  Returns a status message."""
         if self.state not in (GameState.SETUP, GameState.WAITING_PLAYERS):
             return "❌ Cannot join – the game has already started."
         if user_id in self.player_ids:
@@ -89,11 +68,10 @@ class Game:
         self.player_ids.append(user_id)
         self.player_names[user_id] = name
         self.state = GameState.WAITING_PLAYERS
-        self.last_activity = datetime.now(timezone.utc)
         return f"✅ {name} joined the game! ({len(self.player_ids)}/{MAX_PLAYERS} players)"
 
     def remove_player(self, user_id: int) -> str:
-        """Remove a player from the game (plain text response)."""
+        """Remove a player from the game."""
         if user_id not in self.player_ids:
             return "⚠️ You are not in this game."
 
@@ -104,7 +82,6 @@ class Game:
 
         if not self.player_ids:
             self.state = GameState.SETUP
-        self.last_activity = datetime.now(timezone.utc)
         return f"👋 {name} has left the game."
 
     # ------------------------------------------------------------------
@@ -112,14 +89,13 @@ class Game:
     # ------------------------------------------------------------------
 
     def start_game(self, user_id: int) -> str:
-        """Distribute cards and begin play.  Only the creator can call this.
-        Returns a MarkdownV2-formatted message."""
+        """Distribute cards and begin play.  Only the creator can call this."""
         if user_id != self.creator_id:
-            return "❌ Only the game creator can start the game\\."
+            return "❌ Only the game creator can start the game."
         if self.state != GameState.WAITING_PLAYERS:
-            return "❌ Game cannot be started in its current state\\."
+            return "❌ Game cannot be started in its current state."
         if len(self.player_ids) < MIN_PLAYERS:
-            return f"❌ Need at least {MIN_PLAYERS} player to start\\."
+            return f"❌ Need at least {MIN_PLAYERS} player to start."
 
         # Solo mode: add a bot opponent automatically
         if len(self.player_ids) == 1:
@@ -131,13 +107,12 @@ class Game:
         self.state = GameState.PLAYING
         self.active_player_index = 0
         self.round_number = 1
-        self.last_activity = datetime.now(timezone.utc)
-        active_name = _esc(self.player_names[self.active_player])
-        solo_note = "\n🤖 No other players? A Bot has joined as your opponent\\!" if self.bot_id else ""
+        active_name = self.player_names[self.active_player]
+        solo_note = "\n🤖 No other players? A Bot has joined as your opponent!" if self.bot_id else ""
         return (
-            f"🃏 Game started with the *{_esc(self.pack.name)}* pack\\!{solo_note}\n"
-            f"Cards dealt to {len(self.player_ids)} players\\.\n"
-            f"▶️ Round {self.round_number}: {active_name} goes first\\!"
+            f"🃏 Game started with the *{self.pack.name}* pack!{solo_note}\n"
+            f"Cards dealt to {len(self.player_ids)} players.\n"
+            f"▶️ Round {self.round_number}: {active_name} goes first!"
         )
 
     def _deal_cards(self):
@@ -187,7 +162,7 @@ class Game:
           stat       – the chosen stat name
           values     – {player_id: value_of_top_card_for_stat}
           winner_id  – player_id of the round winner (or None for a draw)
-          message    – MarkdownV2-formatted summary string
+          message    – human-readable summary string
           game_over  – True if the game has ended
         """
         if self.state != GameState.PLAYING:
@@ -218,22 +193,22 @@ class Game:
         else:
             round_winner = None  # draw
 
-        # Build the comparison table (MarkdownV2 formatted)
-        unit = _esc(self.pack.stat_units.get(stat, ""))
-        direction_hint = " *\\(lowest wins\\)*" if lower_wins else " *\\(highest wins\\)*"
-        lines = [f"📊 *{_esc(stat)}*{direction_hint} results \\(Round {self.round_number}\\):"]
+        # Build the comparison table
+        unit = self.pack.stat_units.get(stat, "")
+        direction_hint = " *(lowest wins)*" if lower_wins else " *(highest wins)*"
+        lines = [f"📊 *{stat}*{direction_hint} results (Round {self.round_number}):"]
         for pid in self.player_ids:
             if pid in values:
                 mark = "👑" if pid == round_winner else ("🤝" if round_winner is None and pid in winners else "  ")
-                card_name = _esc(top_cards[pid].title)
+                card_name = top_cards[pid].title
                 val = values[pid]
-                lines.append(f"{mark} {_esc(self.player_names[pid])}: {card_name} → {val} {unit}")
+                lines.append(f"{mark} {self.player_names[pid]}: {card_name} → {val} {unit}")
 
         if round_winner:
-            winner_name = _esc(self.player_names[round_winner])
-            lines.append(f"\n🏆 {winner_name} wins the round\\!")
+            winner_name = self.player_names[round_winner]
+            lines.append(f"\n🏆 {winner_name} wins the round!")
         else:
-            lines.append("\n🤝 It's a draw – everyone keeps their card\\!")
+            lines.append("\n🤝 It's a draw – everyone keeps their card!")
 
         # Transfer cards to winner (or keep in place on a draw)
         if round_winner is not None:
@@ -251,15 +226,15 @@ class Game:
         # Remove players with no cards left
         eliminated = [pid for pid in list(self.player_ids) if not self.hands.get(pid)]
         for pid in eliminated:
-            lines.append(f"💀 {_esc(self.player_names[pid])} is out of cards\\!")
+            lines.append(f"💀 {self.player_names[pid]} is out of cards!")
             self.player_ids.remove(pid)
 
         # Check for game over
         game_over = len(self.player_ids) == 1
         if game_over:
             winner_id = self.player_ids[0]
-            winner_name = _esc(self.player_names[winner_id])
-            lines.append(f"\n🎉 *{winner_name} wins the entire game\\!* 🎉")
+            winner_name = self.player_names[winner_id]
+            lines.append(f"\n🎉 *{winner_name} wins the entire game!* 🎉")
             self.state = GameState.GAME_OVER
         else:
             # Advance active player: winner becomes next active player
@@ -269,11 +244,10 @@ class Game:
                 # draw: advance to next in list
                 self.active_player_index = (self.active_player_index + 1) % len(self.player_ids)
             self.round_number += 1
-            next_name = _esc(self.player_names[self.active_player])
-            lines.append(f"\n▶️ Round {self.round_number}: {next_name}'s turn\\!")
+            next_name = self.player_names[self.active_player]
+            lines.append(f"\n▶️ Round {self.round_number}: {next_name}'s turn!")
             self.state = GameState.PLAYING
 
-        self.last_activity = datetime.now(timezone.utc)
         return {
             "stat": stat,
             "values": values,
@@ -287,7 +261,6 @@ class Game:
     # ------------------------------------------------------------------
 
     def status_message(self) -> str:
-        """Return a MarkdownV2-formatted game status string."""
         state_label = {
             GameState.SETUP: "Waiting for players to join",
             GameState.WAITING_PLAYERS: "Waiting for game to start",
@@ -297,11 +270,11 @@ class Game:
         }.get(self.state, str(self.state))
 
         lines = [
-            f"🎮 *{_esc(self.pack.name)} Pack* – {_esc(state_label)}",
-            f"👥 Players \\({len(self.player_ids)}/{MAX_PLAYERS}\\):",
+            f"🎮 *{self.pack.name} Pack* – {state_label}",
+            f"👥 Players ({len(self.player_ids)}/{MAX_PLAYERS}):",
         ]
         for pid in self.player_ids:
             card_count = len(self.hands.get(pid, []))
             active_mark = "▶️ " if self.state == GameState.PLAYING and pid == self.active_player else "   "
-            lines.append(f"  {active_mark}{_esc(self.player_names[pid])}: {card_count} cards")
+            lines.append(f"  {active_mark}{self.player_names[pid]}: {card_count} cards")
         return "\n".join(lines)
