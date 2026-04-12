@@ -11,6 +11,7 @@ Commands
 /quit                – leave the current game
 """
 
+import logging
 import time
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -21,6 +22,8 @@ from game import GameState, MAX_PLAYERS
 from game_manager import GameManager
 
 game_manager = GameManager()
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Per-user rate limiting (prevents command/callback spam)
@@ -269,6 +272,7 @@ async def _send_active_card_to_chat(context: ContextTypes.DEFAULT_TYPE, chat_id:
     # Build card display (MarkdownV2 formatted)
     esc_title = escape_markdown(card.title, version=2)
     esc_name = escape_markdown(active_name, version=2)
+    logger.debug("Sending card: title=%r, player=%r", card.title, active_name)
     lines = [
         f"🃏 *{esc_title}*",
         f"👤 {esc_name}'s turn – pick a category\\!",
@@ -278,8 +282,10 @@ async def _send_active_card_to_chat(context: ContextTypes.DEFAULT_TYPE, chat_id:
         unit = unit_map.get(stat, "")
         direction = " ↓" if stat in game.pack.lower_is_better else " ↑"
         esc_stat = escape_markdown(stat, version=2)
+        esc_val = escape_markdown(str(val), version=2)
         esc_unit = escape_markdown(unit, version=2)
-        lines.append(f"  • {esc_stat}: {val} {esc_unit}{direction}".rstrip())
+        logger.debug("  stat=%r val=%r unit=%r", stat, val, unit)
+        lines.append(f"  • {esc_stat}: {esc_val} {esc_unit}{direction}".rstrip())
 
     # One button per stat (↑ highest wins, ↓ lowest wins)
     buttons = [
