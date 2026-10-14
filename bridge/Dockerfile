@@ -1,5 +1,5 @@
 FROM python:3.11-slim
 WORKDIR /app
 COPY . .
-EXPOSE 8080
-CMD ["python", "server.py", "--port", "8080"]
+EXPOSE 7070
+CMD ["python", "server.py", "--port", "7070"]

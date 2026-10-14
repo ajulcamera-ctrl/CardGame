@@ -1,4 +1,4 @@
-"""Bridge web server (stdlib only). Run: python server.py [--port 8080]"""
+"""Bridge web server (stdlib only). Run: python server.py [--port 7070]"""
 import json
 import os
 import random
@@ -124,7 +124,7 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     import argparse
     p = argparse.ArgumentParser()
-    p.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8080)))
+    p.add_argument("--port", type=int, default=int(os.environ.get("PORT", 7070)))
     a = p.parse_args()
     print("Bridge server on http://0.0.0.0:%d" % a.port, flush=True)
     ThreadingHTTPServer(("0.0.0.0", a.port), Handler).serve_forever()
