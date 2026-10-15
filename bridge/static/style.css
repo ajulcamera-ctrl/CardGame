@@ -18,12 +18,12 @@ button.card{cursor:pointer}button.card:disabled{opacity:.45}
 button.card.legal{border-color:#f3c623}
 .back{background:#3050a0;color:#fff;border-color:#fff}
 .suitrow{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-top:2px}
-.trick{position:absolute;inset:0}.trick .card{position:absolute}
+.trick{position:absolute;inset:0}.trick>span{position:absolute}
 .t0{top:2px;left:50%;transform:translateX(-50%)}.t1{right:2px;top:50%;transform:translateY(-50%)}
 .t2{bottom:2px;left:50%;transform:translateX(-50%)}.t3{left:2px;top:50%;transform:translateY(-50%)}
 .auction{width:100%;text-align:center;border-collapse:collapse}.auction td,.auction th{padding:3px}
 .bidbox{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px}
 .bidbox button{padding:8px 2px}
-.red{color:#e33}.info{font-size:.9em;opacity:.9}
+.summary{text-align:left;display:inline-block;line-height:1.5}.red{color:#e33}.info{font-size:.9em;opacity:.9}
 .msg{color:#ffb3b3;min-height:1.2em}
 @media(max-width:600px){.card{padding:5px 4px;min-width:26px;font-size:.95em}}
