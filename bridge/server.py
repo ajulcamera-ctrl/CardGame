@@ -12,6 +12,7 @@ from table import Table
 
 STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 FILES = {"/": ("index.html", "text/html; charset=utf-8"),
+         "/help.js": ("help.js", "application/javascript; charset=utf-8"),
          "/app.js": ("app.js", "application/javascript; charset=utf-8"),
          "/style.css": ("style.css", "text/css; charset=utf-8")}
 TABLES = {}
