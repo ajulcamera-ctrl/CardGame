@@ -101,6 +101,6 @@ function tipHtml(d) {
       ? (d.trick.length ? 'Follow suit if you can (gold cards are legal). Win the trick cheaply if possible.' : 'You lead: choose a card. Lead from long suits or top of a sequence.')
       : 'Watch the cards played. ' + trump;
     if (d.turn !== state.me && d.actor === state.me) tip += ' You are playing for dummy.';
-  } else if (d.phase === 'done') tip = 'Hand over. Check the scoring tab to see how the score was calculated.';
+  } else if (d.phase === 'done') tip = 'Hand over. Open the <a href="#" onclick="openHelp(\'scoring\');return false">Scoring tab</a> (under Help) to see how the score was calculated.';
   return tip ? `<div class="tip">💡 ${tip}</div>` : '';
 }
