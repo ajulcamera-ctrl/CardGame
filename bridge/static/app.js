@@ -94,6 +94,7 @@ function lobbyHtml() {
   <div><input id="nm" placeholder="Your name" maxlength="16" value="${esc(localStorage.getItem('bname')||'')}"></div>
   <div><button onclick="create(true)">Play solo vs computer</button></div>
   <div><button onclick="create(false)">Create multiplayer table</button></div>
+  <div><button onclick="openHelp('tutorial')">Tutorial</button> <button onclick="openHelp('basics')">Rules</button></div>
   <div><input id="code" placeholder="Table code" maxlength="4" size="6" style="text-transform:uppercase"> <button onclick="join()">Join</button></div>
   <div class="msg">${esc(msg)}</div></div>`;
 }
@@ -105,7 +106,8 @@ function waitingHtml() {
   <div><button onclick="leave()">Leave</button></div><div class="msg">${esc(msg)}</div></div>`;
 }
 
-function render() {
+function render() { renderMain(); app.innerHTML += helpHtml(); }
+function renderMain() {
   if (!sess || !state) { app.innerHTML = lobbyHtml(); return; }
   if (!state.started) { app.innerHTML = waitingHtml(); return; }
   const d = state.deal, me = state.me ?? 2;
@@ -133,7 +135,7 @@ function render() {
   }
   const hist = state.history.slice().reverse().map(h=>`<div>Board ${h.board}: ${esc(h.text)} → NS ${h.ns}</div>`).join('');
   app.innerHTML = `<div class="panel"><div>Board ${d.board} · ${vulTxt} · Table ${state.code} · Total: NS <b>${state.score.ns}</b> / EW <b>${state.score.ew}</b>
-    <button style="float:right" onclick="leave()">Leave</button></div><div class="info">${status}</div><div class="msg">${esc(msg)}</div></div>
+    <span style="float:right"><button onclick="openHelp('basics')">Help</button> <button onclick="toggleHints()">Hints: ${hintsOn?'on':'off'}</button> <button onclick="leave()">Leave</button></span></div><div class="info">${status}</div>${tipHtml(d)}<div class="msg">${esc(msg)}</div></div>
     <div class="board">${seatHtml(pos(2),'top',d)}${seatHtml(pos(1),'left',d)}<div class="center panel">${center}</div>${seatHtml(pos(3),'right',d)}${seatHtml(pos(0),'bottom',d)}</div>
     <div class="panel info"><b>Results</b>${hist||'<div>None yet</div>'}</div>`;
 }
