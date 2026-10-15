@@ -106,6 +106,8 @@ function waitingHtml() {
   <div><button onclick="leave()">Leave</button></div><div class="msg">${esc(msg)}</div></div>`;
 }
 
+const openBoards = new Set();
+function toggleBoard(el) { const b = el.dataset.board; if (el.open) openBoards.add(b); else openBoards.delete(b); }
 function render() { renderMain(); app.innerHTML += helpHtml(); }
 function renderMain() {
   if (!sess || !state) { app.innerHTML = lobbyHtml(); return; }
@@ -138,7 +140,7 @@ function renderMain() {
     const tricks = (h.tricks || []).map((t, i) =>
       `<li>Trick ${i + 1}: ${t.plays.map(p => `${NAMES[p.seat]} ${cardHtml(p.card)}`).join(' · ')} — won by ${NAMES[t.winner]} (${t.winner % 2 === 0 ? 'North/South' : 'East/West'})</li>`
     ).join('');
-    return `<details class="deal-summary"><summary>Board ${h.board}: ${esc(h.text)} · NS ${h.ns} / EW ${h.ew} · Winner: ${winner}</summary><ol>${tricks || '<li>No cards played (passed out)</li>'}</ol></details>`;
+    return `<details class="deal-summary" data-board="${h.board}"${openBoards.has(String(h.board))?' open':''} ontoggle="toggleBoard(this)"><summary>Board ${h.board}: ${esc(h.text)} · NS ${h.ns} / EW ${h.ew} · Winner: ${winner}</summary><ol>${tricks || '<li>No cards played (passed out)</li>'}</ol></details>`;
   }).join('');
   app.innerHTML = `<div class="panel"><div>Board ${d.board} · ${vulTxt} · Table ${state.code} · Total: NS <b>${state.score.ns}</b> / EW <b>${state.score.ew}</b>
     <span style="float:right"><button onclick="openHelp('basics')">Help</button> <button onclick="toggleHints()">Hints: ${hintsOn?'on':'off'}</button> <button onclick="leave()">Leave</button></span></div><div class="info">${status}</div>${tipHtml(d)}<div class="msg">${esc(msg)}</div></div>
