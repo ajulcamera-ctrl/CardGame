@@ -100,7 +100,10 @@ class Table:
             d.recorded = True
             self.score[0] += d.result["ns"]
             self.score[1] += d.result["ew"]
-            self.history.append(dict(board=d.board, text=d.result["text"], ns=d.result["ns"], ew=d.result["ew"]))
+            self.history.append(dict(
+                board=d.board, text=d.result["text"], ns=d.result["ns"], ew=d.result["ew"],
+                tricks=d.trick_history,
+            ))
 
     def bid(self, token, call):
         seat = self.seat_of(token)

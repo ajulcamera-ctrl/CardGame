@@ -133,7 +133,13 @@ function renderMain() {
       <div>Running total: NS <b>${state.score.ns}</b> / EW <b>${state.score.ew}</b></div>
       <button onclick="post('/api/next')">Next deal</button></div>`;
   }
-  const hist = state.history.slice().reverse().map(h=>`<div>Board ${h.board}: ${esc(h.text)} → NS ${h.ns}</div>`).join('');
+  const hist = state.history.slice().reverse().map(h => {
+    const winner = h.ns > h.ew ? 'North/South' : h.ew > h.ns ? 'East/West' : 'Tie';
+    const tricks = (h.tricks || []).map((t, i) =>
+      `<li>Trick ${i + 1}: ${t.plays.map(p => `${NAMES[p.seat]} ${cardHtml(p.card)}`).join(' · ')} — won by ${NAMES[t.winner]} (${t.winner % 2 === 0 ? 'North/South' : 'East/West'})</li>`
+    ).join('');
+    return `<details class="deal-summary"><summary>Board ${h.board}: ${esc(h.text)} · NS ${h.ns} / EW ${h.ew} · Winner: ${winner}</summary><ol>${tricks || '<li>No cards played (passed out)</li>'}</ol></details>`;
+  }).join('');
   app.innerHTML = `<div class="panel"><div>Board ${d.board} · ${vulTxt} · Table ${state.code} · Total: NS <b>${state.score.ns}</b> / EW <b>${state.score.ew}</b>
     <span style="float:right"><button onclick="openHelp('basics')">Help</button> <button onclick="toggleHints()">Hints: ${hintsOn?'on':'off'}</button> <button onclick="leave()">Leave</button></span></div><div class="info">${status}</div>${tipHtml(d)}<div class="msg">${esc(msg)}</div></div>
     <div class="board">${seatHtml(pos(2),'top',d)}${seatHtml(pos(1),'left',d)}<div class="center panel">${center}</div>${seatHtml(pos(3),'right',d)}${seatHtml(pos(0),'bottom',d)}</div>

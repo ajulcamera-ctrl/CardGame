@@ -88,6 +88,7 @@ class Deal:
         self.trick_done_at = None
         self.tricks_won = [0, 0]
         self.last_trick = None
+        self.trick_history = []
         self.result = None
 
     # ---- bidding ----
@@ -210,6 +211,10 @@ class Deal:
         w = self.trick_winner()
         self.tricks_won[side(w)] += 1
         self.last_trick = list(self.trick)
+        self.trick_history.append(dict(
+            plays=[dict(seat=seat, card=card) for seat, card in self.trick],
+            winner=w,
+        ))
         self.trick = []
         self.trick_done_at = None
         self.turn = w
