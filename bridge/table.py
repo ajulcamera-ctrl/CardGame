@@ -23,6 +23,7 @@ class Table:
         self.touched = time.time()
         self.last_action = time.time()
         self.started = False
+        self.solo = False
 
     def join(self, name, seat=None):
         free = [i for i in range(4) if self.tokens[i] is None and not self.is_bot[i]]
@@ -46,7 +47,8 @@ class Table:
     def seat_of(self, token):
         return self.tokens.index(token) if token in self.tokens and token else None
 
-    def start(self):
+    def start(self, solo=False):
+        self.solo = solo
         for i in range(4):
             if self.tokens[i] is None:
                 self.is_bot[i] = True
@@ -60,8 +62,14 @@ class Table:
         self.deal = Deal(self.board, dealer)
         self.last_action = time.time()
 
+    def _controller(self, d, seat):
+        if (self.solo and d.phase == "playing" and d.contract
+                and side(d.contract["declarer"]) == 0 and side(seat) == 0):
+            return 2
+        return d.controller(seat)
+
     def _controller_is_bot(self, d):
-        seat = d.turn if d.phase == "bidding" else d.controller(d.turn)
+        seat = d.turn if d.phase == "bidding" else self._controller(d, d.turn)
         return self.is_bot[seat]
 
     def advance(self):
@@ -105,7 +113,7 @@ class Table:
     def play(self, token, card):
         seat = self.seat_of(token)
         d = self.deal
-        if seat is None or d.phase != "playing" or d.controller(d.turn) != seat:
+        if seat is None or d.phase != "playing" or self._controller(d, d.turn) != seat:
             raise ValueError("Not your turn")
         d.play(d.turn, card)
         self.last_action = time.time()
@@ -132,7 +140,7 @@ class Table:
         if d.phase == "bidding":
             actor = d.turn
         elif d.phase == "playing" and not d.trick_done_at:
-            actor = d.controller(d.turn)
+            actor = self._controller(d, d.turn)
         hands = [None] * 4
         counts = [len(h) for h in d.hands]
         for i in range(4):
@@ -141,6 +149,9 @@ class Table:
                 show = True
             if playing and d.contract and me == d.contract["declarer"] and i == d.dummy:
                 show = True if d.dummy_visible() else show
+            if (playing and self.solo and me == 2 and d.contract
+                    and side(d.contract["declarer"]) == 0 and side(i) == 0):
+                show = True
             if show:
                 hands[i] = list(d.hands[i]) if d.phase != "done" else sort_hand(d.original[i])
         v["deal"] = dict(
