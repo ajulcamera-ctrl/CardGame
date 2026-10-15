@@ -55,7 +55,7 @@ def handle(path, q, body):
             TABLES[t.code] = t
             token, seat = t.join(body.get("name"), 2)
             if body.get("solo"):
-                t.start()
+                t.start(solo=True)
             return dict(table=t.code, token=token, seat=seat)
         t = get_table(body.get("table"))
         token = body.get("token")
