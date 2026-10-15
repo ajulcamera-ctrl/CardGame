@@ -117,13 +117,20 @@ function render() {
     const tr = d.trick.length ? d.trick : [];
     center = `<div class="trick">${tr.map(t=>`<span class="t${(rel(t.seat))===0?2:(rel(t.seat))===1?3:(rel(t.seat))===2?0:1}">${cardHtml(t.card)}</span>`).join('')}</div>`;
   }
-  const vulTxt = `NS ${d.vul[0]?'vulnerable':'not vul'} · EW ${d.vul[1]?'vulnerable':'not vul'}`;
+  const vulTxt = `You (NS) ${d.vul[0]?'vulnerable':'not vulnerable'} · Opponents (EW) ${d.vul[1]?'vulnerable':'not vulnerable'}`;
   let status = '';
   if (d.phase==='playing') status = `Contract ${d.contract.text} · Tricks NS ${d.tricks[0]} – EW ${d.tricks[1]}` +
      (d.actor===state.me ? ` · <b>Your turn${d.turn!==state.me?' (play for dummy)':''}</b>` : d.actor!=null ? ` · Waiting for ${NAMES[d.actor]}` : '');
   if (d.phase==='bidding') status = `Dealer ${NAMES[d.dealer]} · Auction`;
-  if (d.phase==='done') status = `<b>${d.result.text}</b> (NS ${d.result.ns>=0?'+':''}${d.result.ns})` +
-     ` <button onclick="post('/api/next')">Next deal</button>`;
+  if (d.phase==='done') {
+    const r = d.result, fmt = n => (n>=0?'+':'') + n;
+    status = `<div class="summary"><b>Hand summary</b>
+      <div>Contract: ${d.contract ? d.contract.text + ' by ' + NAMES[d.contract.declarer] : 'Passed out'}</div>
+      <div>Result: ${esc(r.text)}</div>
+      <div>Score this hand: NS <b>${fmt(r.ns)}</b> / EW <b>${fmt(r.ew)}</b></div>
+      <div>Running total: NS <b>${state.score.ns}</b> / EW <b>${state.score.ew}</b></div>
+      <button onclick="post('/api/next')">Next deal</button></div>`;
+  }
   const hist = state.history.slice().reverse().map(h=>`<div>Board ${h.board}: ${esc(h.text)} → NS ${h.ns}</div>`).join('');
   app.innerHTML = `<div class="panel"><div>Board ${d.board} · ${vulTxt} · Table ${state.code} · Total: NS <b>${state.score.ns}</b> / EW <b>${state.score.ew}</b>
     <button style="float:right" onclick="leave()">Leave</button></div><div class="info">${status}</div><div class="msg">${esc(msg)}</div></div>
